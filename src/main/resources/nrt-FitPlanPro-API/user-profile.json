@@ -1,0 +1,695 @@
+{
+  "info": {
+    "_postman_id": "a7b8c9d0-e1f2-g3h4-i5j6-k7l8m9n0o1p2",
+    "name": "FitPlanPro - User Profile API Tests",
+    "description": "Non-Regression Tests for FitPlanPro User Profile API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Profile Creation Tests",
+      "item": [
+        {
+          "name": "Create Profile - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Profile created successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Profile data matches input data\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profileData = responseData.data;",
+                  "    ",
+                  "    pm.expect(profileData.userId).to.equal(parseInt(pm.environment.get(\"userId\")));",
+                  "    pm.expect(profileData.gender).to.equal(\"MALE\");",
+                  "    pm.expect(profileData.age).to.equal(30);",
+                  "    pm.expect(profileData.height).to.equal(180);",
+                  "    pm.expect(profileData.currentWeight).to.equal(80);",
+                  "    pm.expect(profileData.targetWeight).to.equal(75);",
+                  "    pm.expect(profileData.goalType).to.equal(\"WEIGHT_LOSS\");",
+                  "    ",
+                  "    // Store profile ID for future requests",
+                  "    pm.environment.set(\"profileId\", profileData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"gender\": \"MALE\",\n    \"age\": 30,\n    \"height\": 180,\n    \"currentWeight\": 80,\n    \"targetWeight\": 75,\n    \"goalType\": \"WEIGHT_LOSS\",\n    \"trainingExperience\": \"INTERMEDIATE\",\n    \"trainingLocation\": \"GYM\",\n    \"daysPerWeek\": 4,\n    \"dietPreference\": \"NORMAL\",\n    \"mealsPerDay\": 3,\n    \"snacksPerDay\": 2,\n    \"locationCulture\": \"MENA\",\n    \"medicalConditions\": \"None\",\n    \"foodAllergies\": \"None\",\n    \"timePerWorkout\": 60,\n    \"equipmentAvailable\": \"Dumbbells, Barbell, Bench\",\n    \"budgetConstraints\": \"MEDIUM\",\n    \"preferredWorkoutTime\": \"EVENING\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles"
+              ]
+            },
+            "description": "Create a new user profile with valid data"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Profile - Missing Required Fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors for missing fields\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('gender');",
+                  "    pm.expect(responseData.errors).to.have.property('age');",
+                  "    pm.expect(responseData.errors).to.have.property('height');",
+                  "    pm.expect(responseData.errors).to.have.property('currentWeight');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"goalType\": \"WEIGHT_LOSS\",\n    \"trainingExperience\": \"INTERMEDIATE\",\n    \"trainingLocation\": \"GYM\",\n    \"daysPerWeek\": 4,\n    \"dietPreference\": \"NORMAL\",\n    \"mealsPerDay\": 3,\n    \"snacksPerDay\": 2,\n    \"locationCulture\": \"MENA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles"
+              ]
+            },
+            "description": "Attempt to create a profile without required fields"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Profile - Invalid Values",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors for invalid values\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.keys(['age', 'height', 'currentWeight', 'daysPerWeek']);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"gender\": \"MALE\",\n    \"age\": 10,\n    \"height\": 90,\n    \"currentWeight\": 20,\n    \"targetWeight\": 75,\n    \"goalType\": \"WEIGHT_LOSS\",\n    \"trainingExperience\": \"INTERMEDIATE\",\n    \"trainingLocation\": \"GYM\",\n    \"daysPerWeek\": 10,\n    \"dietPreference\": \"NORMAL\",\n    \"mealsPerDay\": 3,\n    \"snacksPerDay\": 2,\n    \"locationCulture\": \"MENA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles"
+              ]
+            },
+            "description": "Attempt to create a profile with invalid values (age too low, height too low, etc.)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Profile - Unauthenticated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function() {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates authentication error\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"gender\": \"MALE\",\n    \"age\": 30,\n    \"height\": 180,\n    \"currentWeight\": 80,\n    \"targetWeight\": 75,\n    \"goalType\": \"WEIGHT_LOSS\",\n    \"trainingExperience\": \"INTERMEDIATE\",\n    \"trainingLocation\": \"GYM\",\n    \"daysPerWeek\": 4,\n    \"dietPreference\": \"NORMAL\",\n    \"mealsPerDay\": 3,\n    \"snacksPerDay\": 2,\n    \"locationCulture\": \"MENA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles"
+              ]
+            },
+            "description": "Attempt to create a profile without authentication"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile Retrieval Tests",
+      "item": [
+        {
+          "name": "Get Current User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Profile retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Profile data matches expected values\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profileData = responseData.data;",
+                  "    ",
+                  "    pm.expect(profileData.id).to.equal(parseInt(pm.environment.get(\"profileId\")));",
+                  "    pm.expect(profileData.userId).to.equal(parseInt(pm.environment.get(\"userId\")));",
+                  "    pm.expect(profileData.gender).to.equal(\"MALE\");",
+                  "    pm.expect(profileData.goalType).to.equal(\"WEIGHT_LOSS\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me"
+              ]
+            },
+            "description": "Get the current user's profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Profile retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Profile data matches expected ID\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profileData = responseData.data;",
+                  "    ",
+                  "    pm.expect(profileData.id).to.equal(parseInt(pm.environment.get(\"profileId\")));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/{{profileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "{{profileId}}"
+              ]
+            },
+            "description": "Get a profile by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile By ID - Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function() {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates profile not found\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.message).to.include(\"not found\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/99999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "99999"
+              ]
+            },
+            "description": "Attempt to get a non-existent profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile - Unauthenticated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function() {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates authentication error\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me"
+              ]
+            },
+            "description": "Attempt to get a profile without authentication"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Profile metrics retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Profile metrics contains simplified data\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const metricsData = responseData.data;",
+                  "    ",
+                  "    pm.expect(metricsData).to.have.property('gender');",
+                  "    pm.expect(metricsData).to.have.property('age');",
+                  "    pm.expect(metricsData).to.have.property('height');",
+                  "    pm.expect(metricsData).to.have.property('currentWeight');",
+                  "    pm.expect(metricsData).to.have.property('targetWeight');",
+                  "    pm.expect(metricsData).to.have.property('goalType');",
+                  "    pm.expect(metricsData).to.have.property('trainingExperience');",
+                  "    pm.expect(metricsData).to.have.property('dietPreference');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me",
+                "metrics"
+              ]
+            },
+            "description": "Get metrics from the current user's profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Profile Existence - True",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates profile exists\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Profile check completed\");",
+                  "    pm.expect(responseData.data).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "check"
+              ]
+            },
+            "description": "Check if the current user has a profile"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile Update Tests",
+      "item": [
+        {
+          "name": "Update Profile - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Profile updated successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Profile data has been updated correctly\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profileData = responseData.data;",
+                  "    ",
+                  "    pm.expect(profileData.id).to.equal(parseInt(pm.environment.get(\"profileId\")));",
+                  "    pm.expect(profileData.currentWeight).to.equal(78);",
+                  "    pm.expect(profileData.targetWeight).to.equal(70);",
+                  "    pm.expect(profileData.goalType).to.equal(\"WEIGHT_LOSS\");",
+                  "    pm.expect(profileData.equipmentAvailable).to.equal(\"Dumbbells, Barbell, Bench, Kettlebells\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"currentWeight\": 78,\n    \"targetWeight\": 70,\n    \"daysPerWeek\": 5,\n    \"timePerWorkout\": 75,\n    \"equipmentAvailable\": \"Dumbbells, Barbell, Bench, Kettlebells\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me"
+              ]
+            },
+            "description": "Update the current user's profile with valid data"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile - Invalid Values",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors for invalid values\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('currentWeight');",
+                  "    pm.expect(responseData.errors).to.have.property('targetWeight');",
+                  "    pm.expect(responseData.errors).to.have.property('daysPerWeek');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"currentWeight\": 20,\n    \"targetWeight\": 15,\n    \"daysPerWeek\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me"
+              ]
+            },
+            "description": "Attempt to update profile with invalid values"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile - Profile Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function() {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates profile not found\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.message).to.include(\"not found\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid.token.for.user.without.profile"
+              }
+            ],

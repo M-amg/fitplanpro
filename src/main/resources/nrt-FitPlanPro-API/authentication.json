@@ -1,0 +1,784 @@
+{
+  "info": {
+    "_postman_id": "f1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6",
+    "name": "FitPlanPro - Authentication API Tests",
+    "description": "Non-Regression Tests for FitPlanPro Authentication API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Environment Setup",
+      "item": [
+        {
+          "name": "Set Environment Variables",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Set base URL for API",
+                  "pm.environment.set(\"baseUrl\", \"http://localhost:8080/api\");",
+                  "",
+                  "// Generate a unique email for testing",
+                  "const timestamp = new Date().getTime();",
+                  "const testEmail = `test.user.${timestamp}@example.com`;",
+                  "pm.environment.set(\"testEmail\", testEmail);",
+                  "",
+                  "// Set test password",
+                  "pm.environment.set(\"testPassword\", \"Password123!\");",
+                  "",
+                  "// Set test phone number",
+                  "pm.environment.set(\"testPhone\", `+1${Math.floor(1000000000 + Math.random() * 9000000000)}`);",
+                  "",
+                  "console.log(`Test email: ${testEmail}`);",
+                  "console.log(`Test phone: ${pm.environment.get(\"testPhone\")}`);",
+                  "",
+                  "pm.test(\"Environment variables set successfully\", function() {",
+                  "    pm.expect(pm.environment.get(\"baseUrl\")).to.not.be.undefined;",
+                  "    pm.expect(pm.environment.get(\"testEmail\")).to.not.be.undefined;",
+                  "    pm.expect(pm.environment.get(\"testPassword\")).to.not.be.undefined;",
+                  "    pm.expect(pm.environment.get(\"testPhone\")).to.not.be.undefined;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": [
+                "{{baseUrl}}"
+              ]
+            },
+            "description": "Initialize environment variables for testing"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Registration Tests",
+      "item": [
+        {
+          "name": "Register User - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"User registered successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains token and user data\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const authData = responseData.data;",
+                  "    ",
+                  "    pm.expect(authData.token).to.be.a('string');",
+                  "    pm.expect(authData.token.length).to.be.greaterThan(10);",
+                  "    pm.expect(authData.user).to.be.an('object');",
+                  "    pm.expect(authData.user.email).to.equal(pm.environment.get(\"testEmail\"));",
+                  "    ",
+                  "    // Store token for future requests",
+                  "    pm.environment.set(\"authToken\", authData.token);",
+                  "    pm.environment.set(\"userId\", authData.user.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{testEmail}}\",\n    \"phone\": \"{{testPhone}}\",\n    \"password\": \"{{testPassword}}\",\n    \"languagePreference\": \"ENGLISH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user with valid data"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User - Email Already Exists",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error about existing user\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.message).to.include(\"already exists\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{testEmail}}\",\n    \"phone\": \"+15551234567\",\n    \"password\": \"{{testPassword}}\",\n    \"languagePreference\": \"ENGLISH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Attempt to register with an email that already exists"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User - Invalid Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation error for email\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('email');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"invalid-email\",\n    \"phone\": \"+15551234568\",\n    \"password\": \"{{testPassword}}\",\n    \"languagePreference\": \"ENGLISH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Attempt to register with an invalid email format"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User - Password Too Short",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation error for password\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('password');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"short.password@example.com\",\n    \"phone\": \"+15551234569\",\n    \"password\": \"short\",\n    \"languagePreference\": \"ENGLISH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Attempt to register with a password that's too short"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User - Missing Required Fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors for missing fields\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('email');",
+                  "    pm.expect(responseData.errors).to.have.property('password');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"phone\": \"+15551234570\",\n    \"languagePreference\": \"ENGLISH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Attempt to register without providing required fields"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Login Tests",
+      "item": [
+        {
+          "name": "Login User - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Login successful\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains token and user data\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const authData = responseData.data;",
+                  "    ",
+                  "    pm.expect(authData.token).to.be.a('string');",
+                  "    pm.expect(authData.token.length).to.be.greaterThan(10);",
+                  "    pm.expect(authData.user).to.be.an('object');",
+                  "    pm.expect(authData.user.email).to.equal(pm.environment.get(\"testEmail\"));",
+                  "    ",
+                  "    // Update token for future requests",
+                  "    pm.environment.set(\"authToken\", authData.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"emailOrPhone\": \"{{testEmail}}\",\n    \"password\": \"{{testPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with valid credentials (email)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login User - With Phone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Login successful\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains token and user data\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const authData = responseData.data;",
+                  "    ",
+                  "    pm.expect(authData.token).to.be.a('string');",
+                  "    pm.expect(authData.user).to.be.an('object');",
+                  "    ",
+                  "    // Update token for future requests",
+                  "    pm.environment.set(\"authToken\", authData.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"emailOrPhone\": \"{{testPhone}}\",\n    \"password\": \"{{testPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with valid credentials (phone)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login User - Invalid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function() {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error about invalid credentials\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.message).to.include(\"Invalid\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"emailOrPhone\": \"{{testEmail}}\",\n    \"password\": \"WrongPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Attempt to login with incorrect password"
+          },
+          "response": []
+        },
+        {
+          "name": "Login User - Non-existent User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function() {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error about non-existent user\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.message).to.include(\"Invalid\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"emailOrPhone\": \"nonexistent.user@example.com\",\n    \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Attempt to login with a non-existent user"
+          },
+          "response": []
+        },
+        {
+          "name": "Login User - Missing Fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors for missing fields\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"emailOrPhone\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Attempt to login without providing required fields"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication Check Tests",
+      "item": [
+        {
+          "name": "Check Auth - Authenticated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates authenticated status\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Authenticated\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check"
+              ]
+            },
+            "description": "Check authentication with valid token"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Auth - Unauthenticated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function() {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates unauthenticated status\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check"
+              ]
+            },
+            "description": "Check authentication without token"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Auth - Invalid Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function() {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates invalid token\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid.token.here"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check"
+              ]
+            },
+            "description": "Check authentication with invalid token"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "testEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testPhone",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
