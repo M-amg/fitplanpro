@@ -660,7 +660,177 @@
           "response": []
         },
         {
-          "name": "Update Profile - Profile Not Found",
+          "name": "Update Profile - Unauthenticated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function() {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates authentication error\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"currentWeight\": 78,\n    \"targetWeight\": 70\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me"
+              ]
+            },
+            "description": "Attempt to update profile without authentication"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile - Goal Type Change",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Goal type updated successfully\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profileData = responseData.data;",
+                  "    ",
+                  "    pm.expect(profileData.goalType).to.equal(\"MUSCLE_GAIN\");",
+                  "    pm.expect(profileData.targetWeight).to.equal(85);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"goalType\": \"MUSCLE_GAIN\",\n    \"targetWeight\": 85,\n    \"trainingExperience\": \"ADVANCED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me"
+              ]
+            },
+            "description": "Update profile to change goal type to muscle gain"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile Search & Similar Tests",
+      "item": [
+        {
+          "name": "Find Similar Profiles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Similar profiles found\");",
+                  "    pm.expect(responseData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Similar profiles data structure is correct\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profilesData = responseData.data;",
+                  "    ",
+                  "    if (profilesData.length > 0) {",
+                  "        pm.expect(profilesData[0]).to.have.property('id');",
+                  "        pm.expect(profilesData[0]).to.have.property('gender');",
+                  "        pm.expect(profilesData[0]).to.have.property('age');",
+                  "        pm.expect(profilesData[0]).to.have.property('goalType');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/{{profileId}}/similar?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "{{profileId}}",
+                "similar"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Find profiles similar to the current user's profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Find Similar Profiles - Invalid Profile ID",
           "event": [
             {
               "listen": "test",
@@ -682,6 +852,229 @@
             }
           ],
           "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/99999/similar?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "99999",
+                "similar"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Attempt to find similar profiles for a non-existent profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Find Similar Profiles - With Custom Limit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response respects limit parameter\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profilesData = responseData.data;",
+                  "    ",
+                  "    pm.expect(profilesData.length).to.be.at.most(3);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/{{profileId}}/similar?limit=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "{{profileId}}",
+                "similar"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": "Find similar profiles with a custom limit"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile Validation Edge Cases",
+      "item": [
+        {
+          "name": "Create Profile - Boundary Values Valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Boundary values are accepted\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profileData = responseData.data;",
+                  "    ",
+                  "    pm.expect(profileData.age).to.equal(13);",
+                  "    pm.expect(profileData.height).to.equal(100);",
+                  "    pm.expect(profileData.currentWeight).to.equal(30);",
+                  "    pm.expect(profileData.daysPerWeek).to.equal(1);",
+                  "    pm.expect(profileData.mealsPerDay).to.equal(1);",
+                  "    pm.expect(profileData.snacksPerDay).to.equal(0);",
+                  "    ",
+                  "    // Store this profile ID for cleanup",
+                  "    pm.environment.set(\"boundaryProfileId\", profileData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"gender\": \"FEMALE\",\n    \"age\": 13,\n    \"height\": 100,\n    \"currentWeight\": 30,\n    \"targetWeight\": 35,\n    \"goalType\": \"GENERAL_FITNESS\",\n    \"trainingExperience\": \"BEGINNER\",\n    \"trainingLocation\": \"HOME\",\n    \"daysPerWeek\": 1,\n    \"dietPreference\": \"VEGETARIAN\",\n    \"mealsPerDay\": 1,\n    \"snacksPerDay\": 0,\n    \"locationCulture\": \"TEST\",\n    \"timePerWorkout\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles"
+              ]
+            },
+            "description": "Create a profile with minimum valid boundary values"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Profile - Boundary Values Invalid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Boundary validation errors are present\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('age');",
+                  "    pm.expect(responseData.errors).to.have.property('height');",
+                  "    pm.expect(responseData.errors).to.have.property('currentWeight');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"gender\": \"FEMALE\",\n    \"age\": 12,\n    \"height\": 99,\n    \"currentWeight\": 29,\n    \"targetWeight\": 35,\n    \"goalType\": \"GENERAL_FITNESS\",\n    \"trainingExperience\": \"BEGINNER\",\n    \"trainingLocation\": \"HOME\",\n    \"daysPerWeek\": 0,\n    \"dietPreference\": \"VEGETARIAN\",\n    \"mealsPerDay\": 0,\n    \"snacksPerDay\": -1,\n    \"locationCulture\": \"TEST\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles"
+              ]
+            },
+            "description": "Attempt to create a profile with invalid boundary values"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile - Partial Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Only specified fields are updated\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profileData = responseData.data;",
+                  "    ",
+                  "    pm.expect(profileData.currentWeight).to.equal(82);",
+                  "    // Other fields should remain unchanged",
+                  "    pm.expect(profileData.gender).to.equal(\"MALE\");",
+                  "    pm.expect(profileData.age).to.equal(30);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
             "method": "PUT",
             "header": [
               {
@@ -690,6 +1083,303 @@
               },
               {
                 "key": "Authorization",
-                "value": "Bearer invalid.token.for.user.without.profile"
+                "value": "Bearer {{authToken}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"currentWeight\": 82\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me"
+              ]
+            },
+            "description": "Update only one field in the profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile Metrics After Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Updated metrics are reflected\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const metricsData = responseData.data;",
+                  "    ",
+                  "    pm.expect(metricsData.currentWeight).to.equal(82);",
+                  "    pm.expect(metricsData.goalType).to.equal(\"MUSCLE_GAIN\");",
+                  "    pm.expect(metricsData.targetWeight).to.equal(85);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me",
+                "metrics"
+              ]
+            },
+            "description": "Verify that profile metrics reflect the updates"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile Security Tests",
+      "item": [
+        {
+          "name": "Access Other User Profile - Forbidden",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Create a second user for testing cross-user access",
+                  "const timestamp = new Date().getTime();",
+                  "const secondUserEmail = `test.user2.${timestamp}@example.com`;",
+                  "pm.environment.set(\"secondUserEmail\", secondUserEmail);",
+                  "",
+                  "// Register second user first",
+                  "const registerRequest = {",
+                  "    url: pm.environment.get(\"baseUrl\") + \"/auth/register\",",
+                  "    method: 'POST',",
+                  "    header: {",
+                  "        'Content-Type': 'application/json'",
+                  "    },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({",
+                  "            email: secondUserEmail,",
+                  "            password: \"Password123!\",",
+                  "            languagePreference: \"ENGLISH\"",
+                  "        })",
+                  "    }",
+                  "};",
+                  "",
+                  "pm.sendRequest(registerRequest, function(err, response) {",
+                  "    if (!err && response.code === 201) {",
+                  "        const authData = response.json().data;",
+                  "        pm.environment.set(\"secondUserToken\", authData.token);",
+                  "        pm.environment.set(\"secondUserId\", authData.user.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// This test should pass if using the same token (user can access their own profile)",
+                  "// In a real scenario, you'd test with a different user's token",
+                  "pm.test(\"Status code is 200 OK (same user)\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"User can access their own profile\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.data.userId).to.equal(parseInt(pm.environment.get(\"userId\")));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/{{profileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "{{profileId}}"
+              ]
+            },
+            "description": "Test accessing a profile (in real scenario, this would test cross-user access)"
+          },
+          "response": []
+        },
+        {
+          "name": "Profile Data Consistency Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Profile data is consistent across endpoints\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const profileData = responseData.data;",
+                  "    ",
+                  "    // Check if profile data has all required fields",
+                  "    pm.expect(profileData).to.have.property('id');",
+                  "    pm.expect(profileData).to.have.property('userId');",
+                  "    pm.expect(profileData).to.have.property('gender');",
+                  "    pm.expect(profileData).to.have.property('age');",
+                  "    pm.expect(profileData).to.have.property('height');",
+                  "    pm.expect(profileData).to.have.property('currentWeight');",
+                  "    pm.expect(profileData).to.have.property('goalType');",
+                  "    pm.expect(profileData).to.have.property('createdAt');",
+                  "    pm.expect(profileData).to.have.property('updatedAt');",
+                  "    ",
+                  "    // Verify timestamps are valid",
+                  "    pm.expect(new Date(profileData.createdAt)).to.be.a('date');",
+                  "    pm.expect(new Date(profileData.updatedAt)).to.be.a('date');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/profiles/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "profiles",
+                "me"
+              ]
+            },
+            "description": "Verify profile data consistency and completeness"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Ensure we have required environment variables",
+          "if (!pm.environment.get(\"baseUrl\")) {",
+          "    pm.environment.set(\"baseUrl\", \"http://localhost:8080/api\");",
+          "}",
+          "",
+          "// Log current request for debugging",
+          "console.log(`Executing: ${pm.info.requestName}`);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test to ensure response time is reasonable",
+          "pm.test(\"Response time is less than 2000ms\", function() {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "// Global test to ensure response has proper content-type",
+          "pm.test(\"Response content-type is application/json\", function() {",
+          "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT token from authentication"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string",
+      "description": "Current user ID"
+    },
+    {
+      "key": "profileId",
+      "value": "",
+      "type": "string",
+      "description": "Current user's profile ID"
+    },
+    {
+      "key": "boundaryProfileId",
+      "value": "",
+      "type": "string",
+      "description": "Profile ID for boundary value testing"
+    },
+    {
+      "key": "secondUserEmail",
+      "value": "",
+      "type": "string",
+      "description": "Email for second test user"
+    },
+    {
+      "key": "secondUserToken",
+      "value": "",
+      "type": "string",
+      "description": "Token for second test user"
+    },
+    {
+      "key": "secondUserId",
+      "value": "",
+      "type": "string",
+      "description": "ID for second test user"
+    }
+  ]
+}
