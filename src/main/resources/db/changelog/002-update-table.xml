@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd
+        http://www.liquibase.org/xml/ns/dbchangelog-ext
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <changeSet id="005-fix-id-column-types" author="fitplanpro">
+        <comment>Fix ID column types to be consistent across all tables</comment>
+
+        <!-- Modify ID columns to ensure all are BIGINT -->
+
+        <modifyDataType tableName="achievement_types" columnName="id" newDataType="BIGINT"/>
+        <modifyDataType tableName="user_achievements" columnName="id" newDataType="BIGINT"/>
+        <modifyDataType tableName="user_achievements" columnName="achievement_type_id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="ai_prompt_templates" columnName="id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="body_measurements" columnName="id" newDataType="BIGINT"/>
+        <modifyDataType tableName="body_measurements" columnName="user_id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="exercise" columnName="id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="food_database" columnName="id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="plans" columnName="id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="progress_photos" columnName="id" newDataType="BIGINT"/>
+        <modifyDataType tableName="progress_photos" columnName="user_id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="tracking" columnName="id" newDataType="BIGINT"/>
+        <modifyDataType tableName="tracking" columnName="user_id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="user_profiles" columnName="id" newDataType="BIGINT"/>
+        <modifyDataType tableName="user_profiles" columnName="user_id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="users" columnName="id" newDataType="BIGINT"/>
+
+        <modifyDataType tableName="workout_history" columnName="id" newDataType="BIGINT"/>
+        <modifyDataType tableName="workout_history" columnName="user_id" newDataType="BIGINT"/>
+    </changeSet>
+</databaseChangeLog>

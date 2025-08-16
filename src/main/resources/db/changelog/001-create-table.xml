@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd
+        http://www.liquibase.org/xml/ns/dbchangelog-ext
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <changeSet id="1" author="fitplanpro">
+        <comment>Create initial schema for FitPlan Pro MVP</comment>
+
+        <!-- Users Table -->
+        <createTable tableName="users">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="phone" type="VARCHAR(20)">
+                <constraints unique="true" nullable="true"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language_preference" type="VARCHAR(10)" defaultValue="en">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_login" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- User Profiles Table -->
+        <createTable tableName="user_profiles">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_profile_user" references="users(id)"/>
+            </column>
+            <column name="gender" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="age" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="height" type="FLOAT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_weight" type="FLOAT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_weight" type="FLOAT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="goal_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="training_experience" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="training_location" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="days_per_week" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="diet_preference" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="meals_per_day" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="snacks_per_day" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location_culture" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="medical_conditions" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="food_allergies" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="time_per_workout" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+            <column name="equipment_available" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="budget_constraints" type="VARCHAR(20)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="preferred_workout_time" type="VARCHAR(20)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="profile_hash" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Plans Table -->
+        <createTable tableName="plans">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="profile_hash" type="VARCHAR(64)">
+                <constraints nullable="false" foreignKeyName="fk_plan_profile" references="user_profiles(profile_hash)"/>
+            </column>
+            <column name="plan_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="plan_data" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ai_model_used" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="generation_time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expiry_time" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="similarity_score" type="FLOAT">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Tracking Data Table -->
+        <createTable tableName="tracking">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_tracking_user" references="users(id)"/>
+            </column>
+            <column name="tracking_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight" type="FLOAT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="meals" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+            <column name="workouts" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+            <column name="water_intake" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+            <column name="progress_photo_url" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create indexes for better performance -->
+        <createIndex indexName="idx_user_email" tableName="users">
+            <column name="email"/>
+        </createIndex>
+
+        <createIndex indexName="idx_user_profile_user_id" tableName="user_profiles">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_user_profile_hash" tableName="user_profiles">
+            <column name="profile_hash"/>
+        </createIndex>
+
+        <createIndex indexName="idx_plan_profile_hash" tableName="plans">
+            <column name="profile_hash"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tracking_user_date" tableName="tracking">
+            <column name="user_id"/>
+            <column name="tracking_date"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="2" author="fitplanpro">
+        <comment>Add additional tables for MVP features</comment>
+
+        <!-- Food Database Table -->
+        <createTable tableName="food_database">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="culture_region" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="calories_per_100g" type="FLOAT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="protein_per_100g" type="FLOAT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="carbs_per_100g" type="FLOAT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fat_per_100g" type="FLOAT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="food_group" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seasonal_availability" type="VARCHAR(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="is_traditional" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Exercise Database Table -->
+        <createTable tableName="exercise">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="muscle_group" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="equipment_required" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="instructions" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="video_url" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- AI Prompt Templates Table -->
+        <createTable tableName="ai_prompt_templates">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="template_name" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="template_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template_content" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create indexes for new tables -->
+        <createIndex indexName="idx_food_name_culture" tableName="food_database">
+            <column name="name"/>
+            <column name="culture_region"/>
+        </createIndex>
+
+        <createIndex indexName="idx_exercise_name" tableName="exercise">
+            <column name="name"/>
+        </createIndex>
+
+        <createIndex indexName="idx_exercise_muscle_equipment" tableName="exercise">
+            <column name="muscle_group"/>
+            <column name="equipment_required"/>
+        </createIndex>
+
+        <createIndex indexName="idx_prompt_template_name" tableName="ai_prompt_templates">
+            <column name="template_name"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="3" author="fitplanpro">
+        <comment>Add achievement system tables</comment>
+
+        <!-- Achievement Types Table -->
+        <createTable tableName="achievement_types">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="icon_url" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="points" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- User Achievements Table -->
+        <createTable tableName="user_achievements">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_achievement_user" references="users(id)"/>
+            </column>
+            <column name="achievement_type_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_achievement_type" references="achievement_types(id)"/>
+            </column>
+            <column name="achieved_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="progress" type="INTEGER" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create index for user achievements -->
+        <createIndex indexName="idx_user_achievements" tableName="user_achievements">
+            <column name="user_id"/>
+            <column name="achievement_type_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="4" author="fitplanpro">
+        <comment>Add additional tracking tables for MVP</comment>
+
+        <!-- Body Measurements Table -->
+        <createTable tableName="body_measurements">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_measurements_user" references="users(id)"/>
+            </column>
+            <column name="measurement_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="chest" type="FLOAT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="waist" type="FLOAT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="hips" type="FLOAT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="arms" type="FLOAT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="thighs" type="FLOAT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Progress Photos Table -->
+        <createTable tableName="progress_photos">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_photos_user" references="users(id)"/>
+            </column>
+            <column name="photo_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="photo_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="photo_url" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Workout History Table -->
+        <createTable tableName="workout_history">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="INTEGER">
+                <constraints nullable="false" foreignKeyName="fk_workout_user" references="users(id)"/>
+            </column>
+            <column name="workout_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="workout_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="duration_minutes" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="calories_burned" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+            <column name="exercises" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notes" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create indexes for new tracking tables -->
+        <createIndex indexName="idx_body_measurements_user_date" tableName="body_measurements">
+            <column name="user_id"/>
+            <column name="measurement_date"/>
+        </createIndex>
+
+        <createIndex indexName="idx_progress_photos_user_date" tableName="progress_photos">
+            <column name="user_id"/>
+            <column name="photo_date"/>
+        </createIndex>
+
+        <createIndex indexName="idx_workout_history_user_date" tableName="workout_history">
+            <column name="user_id"/>
+            <column name="workout_date"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
