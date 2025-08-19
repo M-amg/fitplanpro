@@ -23,7 +23,7 @@ import java.util.List;
  * Controller for plan operations
  */
 @RestController
-@RequestMapping("/api/plans")
+@RequestMapping("/plans")
 @RequiredArgsConstructor
 @Tag(name = "Plans", description = "Plan management API")
 @SecurityRequirement(name = "bearerAuth")

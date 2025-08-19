@@ -27,7 +27,7 @@ import java.util.List;
  * Controller for user profile operations
  */
 @RestController
-@RequestMapping("/api/profiles")
+@RequestMapping("/profiles")
 @RequiredArgsConstructor
 @Tag(name = "User Profiles", description = "User profile management API")
 @SecurityRequirement(name = "bearerAuth")

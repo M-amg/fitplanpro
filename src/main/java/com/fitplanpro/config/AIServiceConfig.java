@@ -3,6 +3,8 @@ package com.fitplanpro.config;
 import com.anthropic.client.AnthropicClient;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.theokanning.openai.service.OpenAiService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -28,11 +30,11 @@ public class AIServiceConfig {
     private String claudeBaseUrl;
 
     @Bean
-    @Primary
     public OpenAiService openAiService() {
         if (!StringUtils.hasText(openAiApiKey)) {
             throw new IllegalStateException("OpenAI API key is required");
         }
+        // Create the OpenAiService with the API key and timeout
         return new OpenAiService(openAiApiKey, Duration.ofSeconds(openAiTimeoutSeconds));
     }
 
@@ -49,7 +51,16 @@ public class AIServiceConfig {
     }
 
     @Bean
+    @Primary
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Register the JavaTimeModule to handle Java 8 date/time types
+        mapper.registerModule(new JavaTimeModule());
+
+        // Disable serializing dates as timestamps (use ISO-8601 format instead)
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        return mapper;
     }
 }

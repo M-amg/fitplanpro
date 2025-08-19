@@ -30,7 +30,7 @@ import java.util.List;
  * Controller for food and exercise database operations
  */
 @RestController
-@RequestMapping("/api/database")
+@RequestMapping("/database")
 @RequiredArgsConstructor
 @Tag(name = "Database", description = "Food and exercise database API")
 @SecurityRequirement(name = "bearerAuth")

@@ -25,7 +25,7 @@ import java.util.List;
  * Controller for tracking operations
  */
 @RestController
-@RequestMapping("/api/tracking")
+@RequestMapping("/tracking")
 @RequiredArgsConstructor
 @Tag(name = "Tracking", description = "Progress tracking API")
 @SecurityRequirement(name = "bearerAuth")

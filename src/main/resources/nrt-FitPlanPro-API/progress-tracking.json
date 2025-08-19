@@ -1,0 +1,1566 @@
+{
+  "info": {
+    "_postman_id": "e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0",
+    "name": "FitPlanPro - Progress Tracking API Tests",
+    "description": "Non-Regression Tests for FitPlanPro Progress Tracking API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Environment Setup",
+      "item": [
+        {
+          "name": "Initialize Test Environment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Set base URL for API",
+                  "pm.environment.set(\"baseUrl\", \"http://localhost:8080/api\");",
+                  "",
+                  "// Generate unique test data",
+                  "const timestamp = new Date().getTime();",
+                  "const testEmail = `tracking.${timestamp}@example.com`;",
+                  "const testPhone = `+1${Math.floor(1000000000 + Math.random() * 9000000000)}`;",
+                  "const testPassword = \"Tracking123!\";",
+                  "",
+                  "pm.environment.set(\"testEmail\", testEmail);",
+                  "pm.environment.set(\"testPhone\", testPhone);",
+                  "pm.environment.set(\"testPassword\", testPassword);",
+                  "",
+                  "// Set test dates",
+                  "const today = new Date();",
+                  "const yesterday = new Date(today);",
+                  "yesterday.setDate(yesterday.getDate() - 1);",
+                  "const weekAgo = new Date(today);",
+                  "weekAgo.setDate(weekAgo.getDate() - 7);",
+                  "",
+                  "pm.environment.set(\"todayDate\", today.toISOString().split('T')[0]);",
+                  "pm.environment.set(\"yesterdayDate\", yesterday.toISOString().split('T')[0]);",
+                  "pm.environment.set(\"weekAgoDate\", weekAgo.toISOString().split('T')[0]);",
+                  "",
+                  "// Generate test photo URLs",
+                  "pm.environment.set(\"frontPhotoUrl\", `https://example.com/photos/front_${timestamp}.jpg`);",
+                  "pm.environment.set(\"sidePhotoUrl\", `https://example.com/photos/side_${timestamp}.jpg`);",
+                  "",
+                  "console.log(`Test email: ${testEmail}`);",
+                  "console.log(`Today: ${today.toISOString().split('T')[0]}`);",
+                  "",
+                  "pm.test(\"Environment variables initialized successfully\", function() {",
+                  "    pm.expect(pm.environment.get(\"baseUrl\")).to.not.be.undefined;",
+                  "    pm.expect(pm.environment.get(\"testEmail\")).to.not.be.undefined;",
+                  "    pm.expect(pm.environment.get(\"todayDate\")).to.not.be.undefined;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": [
+                "{{baseUrl}}"
+              ]
+            },
+            "description": "Initialize environment variables for tracking testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Test User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Test user created successfully\", function() {",
+                  "    pm.response.to.have.status(201);",
+                  "    ",
+                  "    const responseData = pm.response.json();",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.data.token).to.be.a('string');",
+                  "    ",
+                  "    // Store authentication data",
+                  "    pm.environment.set(\"authToken\", responseData.data.token);",
+                  "    pm.environment.set(\"userId\", responseData.data.user.id);",
+                  "    ",
+                  "    console.log(`Test user created with ID: ${responseData.data.user.id}`);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{testEmail}}\",\n    \"phone\": \"{{testPhone}}\",\n    \"password\": \"{{testPassword}}\",\n    \"languagePreference\": \"ENGLISH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Create a test user for tracking testing"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Daily Tracking Tests",
+      "item": [
+        {
+          "name": "Save Daily Tracking - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Tracking data saved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Tracking data matches input\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const trackingData = responseData.data;",
+                  "    ",
+                  "    pm.expect(trackingData.trackingDate).to.equal(pm.environment.get(\"todayDate\"));",
+                  "    pm.expect(trackingData.weight).to.equal(75.5);",
+                  "    pm.expect(trackingData.waterIntake).to.equal(2500);",
+                  "    pm.expect(trackingData.meals).to.be.an('array');",
+                  "    pm.expect(trackingData.meals.length).to.equal(3);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"trackingDate\": \"{{todayDate}}\",\n    \"weight\": 75.5,\n    \"waterIntake\": 2500,\n    \"meals\": [\n        {\n            \"mealNumber\": 1,\n            \"mealType\": \"BREAKFAST\",\n            \"name\": \"Oatmeal with fruits\",\n            \"totalCalories\": 350,\n            \"macros\": {\n                \"protein\": 12,\n                \"carbs\": 65,\n                \"fat\": 8\n            },\n            \"plannedMeal\": true,\n            \"foodItems\": [\n                {\n                    \"name\": \"Oatmeal\",\n                    \"quantity\": 100,\n                    \"unit\": \"g\",\n                    \"calories\": 250\n                },\n                {\n                    \"name\": \"Banana\",\n                    \"quantity\": 1,\n                    \"unit\": \"piece\",\n                    \"calories\": 100\n                }\n            ]\n        },\n        {\n            \"mealNumber\": 2,\n            \"mealType\": \"LUNCH\",\n            \"name\": \"Grilled chicken salad\",\n            \"totalCalories\": 450,\n            \"macros\": {\n                \"protein\": 35,\n                \"carbs\": 20,\n                \"fat\": 25\n            },\n            \"plannedMeal\": false\n        },\n        {\n            \"mealNumber\": 3,\n            \"mealType\": \"DINNER\",\n            \"name\": \"Salmon with vegetables\",\n            \"totalCalories\": 500,\n            \"macros\": {\n                \"protein\": 40,\n                \"carbs\": 30,\n                \"fat\": 28\n            },\n            \"plannedMeal\": true\n        }\n    ],\n    \"workout\": {\n        \"workoutName\": \"Upper Body Strength\",\n        \"durationMinutes\": 60,\n        \"caloriesBurned\": 400,\n        \"completed\": true,\n        \"plannedWorkout\": true,\n        \"exercises\": [\n            {\n                \"name\": \"Bench Press\",\n                \"sets\": 3,\n                \"reps\": \"8-10\",\n                \"weightKg\": 80,\n                \"restSeconds\": 90,\n                \"completed\": true\n            },\n            {\n                \"name\": \"Pull-ups\",\n                \"sets\": 3,\n                \"reps\": \"6-8\",\n                \"restSeconds\": 120,\n                \"completed\": true\n            }\n        ],\n        \"notes\": \"Great workout, felt strong today\"\n    },\n    \"progressPhotoUrl\": \"{{frontPhotoUrl}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/daily",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "daily"
+              ]
+            },
+            "description": "Save comprehensive daily tracking data"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Daily Tracking - Minimal Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Minimal tracking data saved\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const trackingData = responseData.data;",
+                  "    ",
+                  "    pm.expect(trackingData.trackingDate).to.equal(pm.environment.get(\"yesterdayDate\"));",
+                  "    pm.expect(trackingData.weight).to.equal(75.2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"trackingDate\": \"{{yesterdayDate}}\",\n    \"weight\": 75.2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/daily",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "daily"
+              ]
+            },
+            "description": "Save minimal daily tracking data (weight only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Daily Tracking - Invalid Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation error for date\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('trackingDate');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"trackingDate\": \"2030-12-31\",\n    \"weight\": 75.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/daily",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "daily"
+              ]
+            },
+            "description": "Attempt to save tracking data for future date"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Daily Tracking - Invalid Weight",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation error for weight\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('weight');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"trackingDate\": \"{{todayDate}}\",\n    \"weight\": 400\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/daily",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "daily"
+              ]
+            },
+            "description": "Attempt to save tracking data with invalid weight"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Daily Tracking - Unauthenticated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function() {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates authentication error\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"trackingDate\": \"{{todayDate}}\",\n    \"weight\": 75.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/daily",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "daily"
+              ]
+            },
+            "description": "Attempt to save tracking data without authentication"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Daily Tracking Retrieval Tests",
+      "item": [
+        {
+          "name": "Get Daily Tracking - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Tracking data retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Tracking data matches saved data\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const trackingData = responseData.data;",
+                  "    ",
+                  "    pm.expect(trackingData.trackingDate).to.equal(pm.environment.get(\"todayDate\"));",
+                  "    pm.expect(trackingData.weight).to.equal(75.5);",
+                  "    pm.expect(trackingData.waterIntake).to.equal(2500);",
+                  "    pm.expect(trackingData.meals).to.be.an('array');",
+                  "    pm.expect(trackingData.workout).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/daily?date={{todayDate}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "daily"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{todayDate}}"
+                }
+              ]
+            },
+            "description": "Get daily tracking data for today"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Daily Tracking - Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function() {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates tracking data not found\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.message).to.include(\"not found\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/daily?date=2020-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "daily"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2020-01-01"
+                }
+              ]
+            },
+            "description": "Attempt to get tracking data for date with no data"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Today's Tracking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Today's tracking data retrieved\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const trackingData = responseData.data;",
+                  "    ",
+                  "    pm.expect(trackingData.trackingDate).to.equal(pm.environment.get(\"todayDate\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/today",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "today"
+              ]
+            },
+            "description": "Get today's tracking data using dedicated endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tracking Range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Tracking data retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Tracking range contains expected data\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const trackingDataList = responseData.data;",
+                  "    ",
+                  "    pm.expect(trackingDataList.length).to.be.at.least(1);",
+                  "    pm.expect(trackingDataList.length).to.be.at.most(8); // 7 days + 1",
+                  "    ",
+                  "    // Should be sorted by date",
+                  "    for (let i = 1; i < trackingDataList.length; i++) {",
+                  "        const prevDate = new Date(trackingDataList[i-1].trackingDate);",
+                  "        const currDate = new Date(trackingDataList[i].trackingDate);",
+                  "        pm.expect(currDate).to.be.at.least(prevDate);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/range?startDate={{weekAgoDate}}&endDate={{todayDate}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "range"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{weekAgoDate}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{todayDate}}"
+                }
+              ]
+            },
+            "description": "Get tracking data for a date range (last 7 days)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tracking Range - Invalid Date Range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response indicates invalid date range\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.message).to.include(\"Invalid date range\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/range?startDate={{todayDate}}&endDate={{weekAgoDate}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "range"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{todayDate}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{weekAgoDate}}"
+                }
+              ]
+            },
+            "description": "Attempt to get tracking range with invalid date order"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Body Measurements Tests",
+      "item": [
+        {
+          "name": "Save Body Measurements - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Measurements saved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Measurements data matches input\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const measurementData = responseData.data;",
+                  "    ",
+                  "    pm.expect(measurementData.measurementDate).to.equal(pm.environment.get(\"todayDate\"));",
+                  "    pm.expect(measurementData.chest).to.equal(102.5);",
+                  "    pm.expect(measurementData.waist).to.equal(85.0);",
+                  "    pm.expect(measurementData.hips).to.equal(95.5);",
+                  "    pm.expect(measurementData.arms).to.equal(35.0);",
+                  "    pm.expect(measurementData.thighs).to.equal(58.0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"measurementDate\": \"{{todayDate}}\",\n    \"chest\": 102.5,\n    \"waist\": 85.0,\n    \"hips\": 95.5,\n    \"arms\": 35.0,\n    \"thighs\": 58.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/measurements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "measurements"
+              ]
+            },
+            "description": "Save comprehensive body measurements"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Body Measurements - Partial",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Partial measurements saved successfully\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const measurementData = responseData.data;",
+                  "    ",
+                  "    pm.expect(measurementData.measurementDate).to.equal(pm.environment.get(\"yesterdayDate\"));",
+                  "    pm.expect(measurementData.waist).to.equal(84.5);",
+                  "    pm.expect(measurementData.chest).to.be.null;",
+                  "    pm.expect(measurementData.hips).to.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"measurementDate\": \"{{yesterdayDate}}\",\n    \"waist\": 84.5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/measurements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "measurements"
+              ]
+            },
+            "description": "Save partial body measurements (waist only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Body Measurements - Invalid Values",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.keys(['chest', 'waist', 'arms']);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"measurementDate\": \"{{todayDate}}\",\n    \"chest\": 20.0,\n    \"waist\": 25.0,\n    \"hips\": 100.0,\n    \"arms\": 10.0,\n    \"thighs\": 40.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/measurements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "measurements"
+              ]
+            },
+            "description": "Attempt to save body measurements with invalid values"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Body Measurements",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Measurements retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Measurements data contains expected entries\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const measurements = responseData.data;",
+                  "    ",
+                  "    pm.expect(measurements.length).to.be.at.least(1);",
+                  "    ",
+                  "    // Check first measurement structure",
+                  "    if (measurements.length > 0) {",
+                  "        pm.expect(measurements[0]).to.have.property('measurementDate');",
+                  "        pm.expect(measurements[0]).to.have.property('waist');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/measurements?startDate={{weekAgoDate}}&endDate={{todayDate}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "measurements"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{weekAgoDate}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{todayDate}}"
+                }
+              ]
+            },
+            "description": "Get body measurements for date range"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Latest Body Measurements",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains latest measurements\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Latest measurements retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "    pm.expect(responseData.data.measurementDate).to.not.be.undefined;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/measurements/latest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "measurements",
+                "latest"
+              ]
+            },
+            "description": "Get latest body measurements"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Progress Photos Tests",
+      "item": [
+        {
+          "name": "Save Progress Photo - Front",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Photo saved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Photo data matches input\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const photoData = responseData.data;",
+                  "    ",
+                  "    pm.expect(photoData.photoDate).to.equal(pm.environment.get(\"todayDate\"));",
+                  "    pm.expect(photoData.photoType).to.equal(\"FRONT\");",
+                  "    pm.expect(photoData.photoUrl).to.equal(pm.environment.get(\"frontPhotoUrl\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"photoDate\": \"{{todayDate}}\",\n    \"photoType\": \"FRONT\",\n    \"photoUrl\": \"{{frontPhotoUrl}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "photos"
+              ]
+            },
+            "description": "Save front view progress photo"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Progress Photo - Side",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Side photo saved successfully\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const photoData = responseData.data;",
+                  "    ",
+                  "    pm.expect(photoData.photoDate).to.equal(pm.environment.get(\"yesterdayDate\"));",
+                  "    pm.expect(photoData.photoType).to.equal(\"SIDE\");",
+                  "    pm.expect(photoData.photoUrl).to.equal(pm.environment.get(\"sidePhotoUrl\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"photoDate\": \"{{yesterdayDate}}\",\n    \"photoType\": \"SIDE\",\n    \"photoUrl\": \"{{sidePhotoUrl}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "photos"
+              ]
+            },
+            "description": "Save side view progress photo"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Progress Photo - Missing Fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('photoType');",
+                  "    pm.expect(responseData.errors).to.have.property('photoUrl');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"photoDate\": \"{{todayDate}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "photos"
+              ]
+            },
+            "description": "Attempt to save progress photo with missing required fields"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Progress Photos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Photos retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Photos data contains expected entries\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const photos = responseData.data;",
+                  "    ",
+                  "    pm.expect(photos.length).to.be.at.least(1);",
+                  "    ",
+                  "    // Check photo structure",
+                  "    if (photos.length > 0) {",
+                  "        pm.expect(photos[0]).to.have.property('photoDate');",
+                  "        pm.expect(photos[0]).to.have.property('photoType');",
+                  "        pm.expect(photos[0]).to.have.property('photoUrl');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/photos?startDate={{weekAgoDate}}&endDate={{todayDate}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "photos"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{weekAgoDate}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{todayDate}}"
+                }
+              ]
+            },
+            "description": "Get progress photos for date range"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Latest Progress Photo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains latest photo\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Latest photo retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "    pm.expect(responseData.data.photoDate).to.not.be.undefined;",
+                  "    pm.expect(responseData.data.photoUrl).to.not.be.undefined;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/photos/latest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "photos",
+                "latest"
+              ]
+            },
+            "description": "Get latest progress photo"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Latest Progress Photo - By Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains latest photo of requested type\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Latest photo retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "    pm.expect(responseData.data.photoType).to.equal(\"FRONT\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/photos/latest?photoType=FRONT",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "photos",
+                "latest"
+              ],
+              "query": [
+                {
+                  "key": "photoType",
+                  "value": "FRONT"
+                }
+              ]
+            },
+            "description": "Get latest progress photo of specific type"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Workout History Tests",
+      "item": [
+        {
+          "name": "Save Workout History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Workout saved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Workout data matches input\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const workoutData = responseData.data;",
+                  "    ",
+                  "    pm.expect(workoutData.workoutName).to.equal(\"Leg Day\");",
+                  "    pm.expect(workoutData.durationMinutes).to.equal(45);",
+                  "    pm.expect(workoutData.caloriesBurned).to.equal(350);",
+                  "    pm.expect(workoutData.exercises).to.be.an('array');",
+                  "    pm.expect(workoutData.exercises.length).to.equal(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"workoutName\": \"Leg Day\",\n    \"durationMinutes\": 45,\n    \"caloriesBurned\": 350,\n    \"completed\": true,\n    \"plannedWorkout\": true,\n    \"exercises\": [\n        {\n            \"name\": \"Squats\",\n            \"sets\": 4,\n            \"reps\": \"10\",\n            \"weightKg\": 100,\n            \"restSeconds\": 90,\n            \"completed\": true\n        },\n        {\n            \"name\": \"Leg Press\",\n            \"sets\": 3,\n            \"reps\": \"12\",\n            \"weightKg\": 140,\n            \"restSeconds\": 120,\n            \"completed\": true\n        }\n    ],\n    \"notes\": \"Good session, increased weight on squats\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/workouts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "workouts"
+              ]
+            },
+            "description": "Save workout history"
+          },
+          "response": []
+        },
+        {
+          "name": "Save Workout - Invalid Values",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function() {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.false;",
+                  "    pm.expect(responseData.errors).to.be.an('object');",
+                  "    pm.expect(responseData.errors).to.have.property('durationMinutes');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"workoutName\": \"Invalid Workout\",\n    \"durationMinutes\": 400,\n    \"caloriesBurned\": 350,\n    \"completed\": true,\n    \"plannedWorkout\": true,\n    \"exercises\": [\n        {\n            \"name\": \"Squats\",\n            \"sets\": 4,\n            \"reps\": \"10\",\n            \"weightKg\": 100,\n            \"restSeconds\": 90,\n            \"completed\": true\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tracking/workouts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "workouts"
+              ]
+            },
+            "description": "Attempt to save workout with invalid duration (too long)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workout History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData).to.be.an('object');",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Workout history retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Workout history contains expected entries\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    const workouts = responseData.data;",
+                  "    ",
+                  "    pm.expect(workouts.length).to.be.at.least(1);",
+                  "    ",
+                  "    // Check first workout structure",
+                  "    if (workouts.length > 0) {",
+                  "        pm.expect(workouts[0]).to.have.property('workoutName');",
+                  "        pm.expect(workouts[0]).to.have.property('durationMinutes');",
+                  "        pm.expect(workouts[0]).to.have.property('exercises');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/workouts?startDate={{weekAgoDate}}&endDate={{todayDate}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "workouts"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{weekAgoDate}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{todayDate}}"
+                }
+              ]
+            },
+            "description": "Get workout history for date range"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Latest Workout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains latest workout\", function() {",
+                  "    const responseData = pm.response.json();",
+                  "    ",
+                  "    pm.expect(responseData.success).to.be.true;",
+                  "    pm.expect(responseData.message).to.equal(\"Latest workout retrieved successfully\");",
+                  "    pm.expect(responseData.data).to.be.an('object');",
+                  "    pm.expect(responseData.data.workoutName).to.not.be.undefined;",
+                  "    pm.expect(responseData.data.exercises).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tracking/workouts/latest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tracking",
+                "workouts",
+                "latest"
+              ]
+            },
+            "description": "Get,

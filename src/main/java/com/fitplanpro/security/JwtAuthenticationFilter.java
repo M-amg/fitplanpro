@@ -17,12 +17,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
             throws ServletException, IOException {
 
-        String token = jwtTokenProvider.resolveToken(request);
+        String path = request.getServletPath();
+
+        // Skip JWT validation for any path under /auth, regardless of context path
+        if (path.startsWith("/auth") || path.startsWith("/swagger") || path.startsWith("/api-docs")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
+            String token = jwtTokenProvider.resolveToken(request);
+
             if (token != null && jwtTokenProvider.validateToken(token)) {
                 Authentication auth = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(auth);
@@ -35,4 +45,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
 }

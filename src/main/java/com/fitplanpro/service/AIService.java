@@ -225,7 +225,7 @@ public class AIService {
             case "claude-sonnet-4-20250514" -> Model.CLAUDE_SONNET_4_20250514;
             case "claude-opus-4-1-20250805" -> Model.CLAUDE_OPUS_4_1_20250805;
             default -> {
-                log.warn("Unknown Claude model: {}, using default CLAUDE_3_SONNET_20240229", modelName);
+                log.warn("Unknown Claude model: {}, using default CLAUDE_3_OPUS_20240229", modelName);
                 yield Model.CLAUDE_3_OPUS_20240229;
             }
         };

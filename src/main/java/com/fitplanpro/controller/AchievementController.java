@@ -25,7 +25,7 @@ import java.util.List;
  * Controller for achievement operations
  */
 @RestController
-@RequestMapping("/api/achievements")
+@RequestMapping("/achievements")
 @RequiredArgsConstructor
 @Tag(name = "Achievements", description = "Achievement management API")
 @SecurityRequirement(name = "bearerAuth")

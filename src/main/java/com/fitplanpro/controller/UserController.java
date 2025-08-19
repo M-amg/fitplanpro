@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
  * Controller for user operations
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 @Tag(name = "Users", description = "User management API")
 @SecurityRequirement(name = "bearerAuth")
