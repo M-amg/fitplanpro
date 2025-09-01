@@ -29,6 +29,7 @@ function Gate() {
       {/* (tabs) group: dashboard/plans/track/progress/profile */}
       <Stack.Screen name="(tabs)" />
       {/* any other top-level routes (e.g., /progress/details) will auto-register too */}
+      <Stack.Screen name="(onboarding)" /> 
     </Stack>
   );
 }
